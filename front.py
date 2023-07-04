@@ -38,23 +38,29 @@ class BotInterface():
                     self.message_send(event.user_id, f'Ваши данные: {self.params}. Теперь Вы можете воспользоваться командой "поиск" для поиска страниц')
                 elif command == 'поиск':
                     offset = 0
-                    users = self.api.search_users(self.params, event.user_id, offset)
-                    while users:
-                        user = users.pop()
-                        if not check_user(engine, event.user_id, user['id']):
-                            add_user(engine, event.user_id, user['id'])
-                            profile_link = f'https://vk.com/id{user["id"]}'
-                            photos_user = self.api.get_photos(user['id'])
-                            attachment = ''
-                            for photo in photos_user:
-                                attachment += f'photo{photo["owner_id"]}_{photo["id"]},'
-                            self.message_send(event.user_id,
-                                              f'Встречайте {user["name"]} !\n{profile_link}',
-                                              attachment=attachment[:-1])
-                            break
-                        elif not users:
-                            offset += 10
-                            users = self.api.search_users(self.params, event.user_id, offset)
+                    users = []
+                    self.process_search_command(users, event, offset)
+
+    def process_search_command(self, users, event, offset):
+        if not users:
+            users = self.api.search_users(self.params, event.user_id, offset)
+
+        if users:
+            user = users.pop()
+            if not check_user(engine, event.user_id, user['id']):
+                add_user(engine, event.user_id, user['id'])
+                profile_link = f'https://vk.com/id{user["id"]}'
+                photos_user = self.api.get_photos(user['id'])
+                attachment = ''
+                for photo in photos_user:
+                    attachment += f'photo{photo["owner_id"]}_{photo["id"]},'
+                self.message_send(event.user_id,
+                                  f'Встречайте {user["name"]} !\n{profile_link}',
+                                  attachment=attachment[:-1])
+            else:
+                offset += 50
+                self.process_search_command(users, event, offset)
+
 
 
 

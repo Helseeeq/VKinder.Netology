@@ -14,6 +14,8 @@ class BotInterface():
         self.interface = vk_api.VkApi(token=community_token)
         self.api = VkTools(community_token, access_token)
         self.params = None
+        self.users = []
+        self.offset = 0
 
     def message_send(self, user_id, message, attachment=None):
         self.interface.method('messages.send',
@@ -48,16 +50,14 @@ class BotInterface():
                     self.message_send(event.user_id,
                                       f'Ваши данные: {self.params}. Теперь Вы можете воспользоваться командой "поиск" для поиска страниц')
                 elif command == 'поиск':
-                    offset = 0
-                    users = []
-                    self.process_search_command(users, event, offset)
+                    self.process_search_command(event)
 
-    def process_search_command(self, users, event, offset):
-        if not users:
-            users = self.api.search_users(self.params, event.user_id, offset)
+    def process_search_command(self, event):
+        if not self.users:
+            self.users = self.api.search_users(self.params, event.user_id, self.offset)
 
-        if users:
-            user = users.pop()
+        if self.users:
+            user = self.users.pop()
             if not check_user(engine, event.user_id, user['id']):
                 add_user(engine, event.user_id, user['id'])
                 profile_link = f'https://vk.com/id{user["id"]}'
@@ -69,8 +69,8 @@ class BotInterface():
                                   f'Встречайте {user["name"]} !\n{profile_link}',
                                   attachment=attachment[:-1])
             else:
-                offset += 50
-                self.process_search_command(users, event, offset)
+                self.offset += 50
+                self.process_search_command(event)
 
 
 if __name__ == '__main__':

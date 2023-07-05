@@ -34,19 +34,6 @@ class VkTools():
                      'sex': info['sex'] if 'sex' in info else None,
                      'city': info['city']['title'] if 'city' in info else None
                      }
-
-        longpoll = VkLongPoll(self.interface)
-        for key, value in user_info.items():
-            if value is None:
-                self.message_send(user_id, f'Введите {key}')
-                for event in longpoll.listen():
-
-                    if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-                        user_input = event.text.capitalize()
-                        break
-
-                user_info[key] = user_input
-
         return user_info
 
     def search_users(self, params, id, offset):

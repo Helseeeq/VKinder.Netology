@@ -24,7 +24,6 @@ class BotInterface():
                                }
                               )
 
-
     def event_handler(self):
         longpoll = VkLongPoll(self.interface)
 
@@ -32,10 +31,22 @@ class BotInterface():
             if event.type == VkEventType.MESSAGE_NEW and event.to_me:
                 command = event.text.lower()
                 if command == 'старт' or command == 'привет':
-                    self.message_send(event.user_id, f'Здравствуйте, для начала Вам нужно воспользоваться командой "данные", чтобы проверить наличие всех нужных данных.')
+                    self.message_send(event.user_id,
+                                      f'Здравствуйте, для начала Вам нужно воспользоваться командой "данные", чтобы проверить наличие всех нужных данных.')
                 elif command == 'данные':
                     self.params = self.api.get_profile_info(event.user_id)
-                    self.message_send(event.user_id, f'Ваши данные: {self.params}. Теперь Вы можете воспользоваться командой "поиск" для поиска страниц')
+                    for key, value in self.params.items():
+                        if value is None:
+                            self.message_send(event.user_id, f'Введите {key}')
+                            for event in longpoll.listen():
+
+                                if event.type == VkEventType.MESSAGE_NEW and event.to_me:
+                                    user_input = event.text.capitalize()
+                                    break
+
+                            self.params[key] = user_input
+                    self.message_send(event.user_id,
+                                      f'Ваши данные: {self.params}. Теперь Вы можете воспользоваться командой "поиск" для поиска страниц')
                 elif command == 'поиск':
                     offset = 0
                     users = []
@@ -62,14 +73,6 @@ class BotInterface():
                 self.process_search_command(users, event, offset)
 
 
-
-
-
-
-
-
-
 if __name__ == '__main__':
     bot = BotInterface(community_token, access_token)
     bot.event_handler()
-
